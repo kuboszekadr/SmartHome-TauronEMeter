@@ -34,34 +34,36 @@ def extract_data(date: datetime):
     @param date: data date to download
     @returns: tuple for (energy_consumption, energy_production)
     """
-    # downloads daily meter data
-    meter_data = emeter.get_data(
-        meter_id=meter_id,
-        date=date.strftime('%d.%m.%Y'))
 
-    # create energy consumption input data
-    energy_consumption_json = list(meter_data['dane']['chart'].values())
-    energy_consumption_json = json.loads(json.dumps(energy_consumption_json))
-
-    energy_consumption = TauronDataConverter.EnergyData(
-        data=energy_consumption_json,
-        sensor_id=sensor_id,
-        measure_id=energy_consumption_measure_id
+    # download daily meter data
+    emeter.get_data(meter_id=meter_id, date=date.strftime('%d.%m.%Y'))
+    emeter.to_flat_file(
+        file_name_pattern.format(
+            folder='raw',
+            date=date.strftime('%Y_%m_%d'),
+            timestamp=ts),
+        raw=True,
+        mode='w'
     )
+    results = []
 
-    # parse energy generation data
-    # requires additional steps due to having extra level in json
-    energy_production_json = list(meter_data['dane']['OZE'].values())
-    energy_production_json = json.loads(json.dumps(energy_production_json))
+    for val in ['chart', 'OZE']:
+        result = TauronDataConverter.EnergyData(
+            data=emeter.parse('chart'),
+            sensor_id=sensor_id,
+            measure_id=energy_consumption_measure_id
+        )
+        results.append(result)
 
-    # create energy production input data
-    energy_production = TauronDataConverter.EnergyData(
-        data=energy_production_json,
-        sensor_id=sensor_id,
-        measure_id=energy_production_measure_id
+    # save raw files
+    emeter.to_flat_file(
+        file_name_pattern.format(
+            folder='interim',
+            date=date.strftime('%Y_%m_%d'),
+            timestamp=ts),
+        mode='w'
     )
-
-    return (energy_consumption, energy_production)
+    return tuple(results)
 
 
 def transform_data(
@@ -79,28 +81,44 @@ def transform_data(
     )
 
     converter.convert()
-
-    return converter
-
-
-def load_data():
-    file_name_pattern = os.path.join(
-        os.getcwd(),
-        "output",
-        "tauron_emeter_{date}_{timestamp}.json"
-    )
-
     converter.to_flat_file(
         file_name=file_name_pattern.format(
+            folder='processed',
             date=date.strftime("%Y_%m_%d"),
-            timestamp=datetime.datetime.now().strftime("%Y_%m_%d_%H%M%S")
+            timestamp=ts
         ),
         mode='w'
     )
 
 
+def load_argparser():
+    parser = argparse.ArgumentParser(
+        description='Downloads EMeter data from Tauron')
+
+    parser.add_argument('-date_start',
+                        action='store',
+                        type=lambda x: datetime.datetime.strptime(
+                            x, '%Y-%m-%d'),
+                        dest='date_start',
+                        help='Start date of extraction (optional)- default yesterday')
+
+    parser.add_argument('-periods',
+                        action='store',
+                        type=int,
+                        dest='periods',
+                        default=1,
+                        help='End date of extraction (optional)')
+
+
 date_start = None
 periods = None
+timestamp = None
+file_name_pattern = os.path.join(
+    os.getcwd(),
+    'data',
+    '{folder}',
+    '{folder}_tauron_emeter_{date}_{timestamp}.json'
+)
 
 parser = argparse.ArgumentParser(
     description='Downloads EMeter data from Tauron')
@@ -146,9 +164,10 @@ emeter.login()  # login to the page
 # loop through requested data range
 for date in date_range:
     print(date.strftime("%Y_%m_%d"))
-    
+    ts = datetime.datetime.now().strftime("%Y_%m_%d_%H%M%S")
+
     raw_data = extract_data(date)
-    
+
     print("Transforming data...")
     transform_data(raw_data[0], raw_data[1])
 
