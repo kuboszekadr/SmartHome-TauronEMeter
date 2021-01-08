@@ -75,7 +75,7 @@ def transform_data(
     @returns: TauronDataConveter class object after conversion
     """
     converter = TauronDataConverter.TauronDataConverter(
-        device_id=5,
+        device_id=device_id,
         consumption=energy_consumption,
         production=energy_production
     )
@@ -89,25 +89,6 @@ def transform_data(
         ),
         mode='w'
     )
-
-
-def load_argparser():
-    parser = argparse.ArgumentParser(
-        description='Downloads EMeter data from Tauron')
-
-    parser.add_argument('-date_start',
-                        action='store',
-                        type=lambda x: datetime.datetime.strptime(
-                            x, '%Y-%m-%d'),
-                        dest='date_start',
-                        help='Start date of extraction (optional)- default yesterday')
-
-    parser.add_argument('-periods',
-                        action='store',
-                        type=int,
-                        dest='periods',
-                        default=1,
-                        help='End date of extraction (optional)')
 
 
 date_start = None
@@ -140,9 +121,6 @@ args = parser.parse_args()
 date_start = args.date_start
 periods = args.periods
 
-# get date range to be processed
-date_range = get_date_range(date_start, periods)
-
 # read config file
 config = configparser.ConfigParser()
 config.read('config.ini')
@@ -157,6 +135,11 @@ sensor_id = config['API']['sensor_id']
 energy_consumption_measure_id = config['API']['energy_consumption_measure_id']
 energy_production_measure_id = config['API']['energy_production_measure_id']
 
+# get date range to be processed
+date_range = get_date_range(date_start, periods)
+
+ts = datetime.datetime.now().strftime("%Y_%m_%d_%H%M%S")
+
 # create new TauronEMeter class instance
 emeter = TauronEMeter(username, password)
 emeter.login()  # login to the page
@@ -164,7 +147,6 @@ emeter.login()  # login to the page
 # loop through requested data range
 for date in date_range:
     print(date.strftime("%Y_%m_%d"))
-    ts = datetime.datetime.now().strftime("%Y_%m_%d_%H%M%S")
 
     raw_data = extract_data(date)
 
