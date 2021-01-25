@@ -25,20 +25,13 @@ class TauronDataConverter():
     @property
     def converted_data(self) -> str:
         """
-        Returns taruon data converted to SmartHome api format
+        Returns Tauron data converted to SmartHome api format
         """
         return self._converted_data
 
     def convert(self) -> None:
         """
-        Converts tauron meter data into SmartHome API friendly format:
-        {"device_id": 1, "data": {"s":1,"r":["m":1:,"v":22.22],"t":20200513 063312}}
-        where:
-            s - sensor_id (int),
-            r - reading (dict):
-                m - measure_id (int),
-                v - value (float),
-            t - timestamp
+        Converts tauron meter data into SmartHome API friendly format.
 
         @param device_id: device_id in smart home app
         @param sensor_id: sensor_id in smart home app
@@ -48,18 +41,18 @@ class TauronDataConverter():
         results = []
         for raw_data in [self._production_raw, self._consumption_raw]:
             for hour in raw_data.data:
-                datetime = "{} {:02d}0000".format(
-                    hour["Date"], int(hour["Hour"]))
+                datetime = '{} {:02d}0000'.format(
+                    hour['Date'], int(hour['Hour']))
                 value = hour['EC']
 
                 r = {}
-                r["s"] = raw_data.sensor_id
-                r["r"] = {"m": raw_data.measure_id, "v": value}
-                r["t"] = datetime
+                r['sensor_id'] = raw_data.sensor_id
+                r['readings'] = [{'measure_id': raw_data.measure_id, 'value': value}]
+                r['timestamp'] = datetime
 
                 results.append(r)
 
-        results = {"device_id": self._device_id, "data": results}
+        results = {'device_id': self._device_id, 'data': results}
         self._converted_data = json.dumps(results)
 
     def to_flat_file(self, file_name: str, **kwargs) -> bool:

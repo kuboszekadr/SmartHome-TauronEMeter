@@ -8,6 +8,7 @@ import configparser
 import datetime
 import json
 import os
+import requests
 
 
 def get_date_range(date_start: datetime, periods: int = 1) -> list:
@@ -47,12 +48,12 @@ def extract_data(date: datetime):
     )
     results = []
 
-    for val in ['chart', 'OZE']:
+    for val, measure in [('chart', energy_consumption_measure_id),
+                ('OZE', energy_production_measure_id)]:
         result = TauronDataConverter.EnergyData(
-            data=emeter.parse('chart'),
+            data=emeter.parse(val),
             sensor_id=sensor_id,
-            measure_id=energy_consumption_measure_id
-        )
+            measure_id=measure)
         results.append(result)
 
     # save raw files
@@ -90,6 +91,21 @@ def transform_data(
         mode='w'
     )
 
+    return converter
+
+
+def load_data(data: str):
+    url = 'http://192.168.0.115:8000/api/data_collector'
+    headers = {'Content-Type': 'application/x-www-form-urlencoded'}
+    payload = {'data': data}
+    r = requests.post(
+        url,
+        headers=headers,
+        data=payload
+    )
+
+    print(r.status_code)
+
 
 date_start = None
 periods = None
@@ -125,6 +141,8 @@ periods = args.periods
 config = configparser.ConfigParser()
 config.read('config.ini')
 
+# TODO:
+# Change and unify somehow
 username = config['TAURON']['username']
 password = config['TAURON']['password']
 meter_id = config['TAURON']['meter_id']
@@ -151,8 +169,10 @@ for date in date_range:
     raw_data = extract_data(date)
 
     print("Transforming data...")
-    transform_data(raw_data[0], raw_data[1])
+    c = transform_data(raw_data[0], raw_data[1])
 
-    # load_data()
+    print("Sending to collector API...")
+    load_data(c.converted_data)
+
     print("Done")
     sleep(10)
