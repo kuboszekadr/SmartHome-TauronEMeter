@@ -32,25 +32,31 @@ class TauronDataConverter():
     def convert(self) -> None:
         """
         Converts tauron meter data into SmartHome API friendly format.
-
-        @param device_id: device_id in smart home app
-        @param sensor_id: sensor_id in smart home app
-        @param measures_id: measures_id in smart home app
-
         """
         results = []
-        for raw_data in [self._production_raw, self._consumption_raw]:
-            for hour in raw_data.data:
-                datetime = '{} {:02d}0000'.format(
-                    hour['Date'], int(hour['Hour']))
-                value = hour['EC']
+        raw_data = zip(self._production_raw.data, self._consumption_raw.data)
 
-                r = {}
-                r['sensor_id'] = raw_data.sensor_id
-                r['readings'] = [{'measure_id': raw_data.measure_id, 'value': value}]
-                r['timestamp'] = datetime
+        # loop through hours
+        for data in raw_data:
+            production_data = data[0]
+            consumption_data = data[1]
 
-                results.append(r)
+            # it is indifferent which variable we will use...
+            date = production_data['Date']
+            hour = int(production_data['Hour'])
+
+            # construct hour data
+            r = {}
+            r['sensor_id'] = self._production_raw.sensor_id
+            r['readings'] = [
+                {'measure_id': self._production_raw.measure_id,
+                    'value': production_data['EC']},
+                {'measure_id': self._consumption_raw.measure_id,
+                    'value': consumption_data['EC']}
+            ]
+            r['timestamp'] = '{} {:02d}0000'.format(date, hour)
+
+            results.append(r)  # add to the final result set
 
         results = {'device_id': self._device_id, 'data': results}
         self._converted_data = json.dumps(results)
@@ -66,7 +72,7 @@ class TauronDataConverter():
         """
         if len(self.converted_data) == 0:
             raise ValueError
-        
+
         try:
             with open(file_name, **kwargs) as f:
                 f.writelines(self.converted_data)
