@@ -95,7 +95,10 @@ def transform_data(
 
 
 def load_data(data: str):
-    url = 'http://192.168.0.115:8000/api/data_collector'
+    host_ip = os.environ['ENDPOINT_IP']
+    host_port = os.environ['ENDPOINT_PORT']
+
+    url = f'http://{host_ip}:{host_port}/api/data_collector'
     headers = {'Content-Type': 'application/x-www-form-urlencoded'}
     payload = {'data': data}
     r = requests.post(
@@ -140,12 +143,12 @@ periods = args.periods
 # read config file
 config = configparser.ConfigParser()
 config.read('config.ini')
-
+ 
 # TODO:
 # Change and unify somehow
-username = config['TAURON']['username']
-password = config['TAURON']['password']
-meter_id = config['TAURON']['meter_id']
+username = os.environ['USERNAME']
+password = os.environ['PASSWORD']
+meter_id = os.environ['METER_ID']
 
 device_id = config['API']['device_id']
 sensor_id = config['API']['sensor_id']
