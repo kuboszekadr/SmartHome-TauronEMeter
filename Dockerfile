@@ -1,4 +1,4 @@
-FROM python:alpine3.7
+FROM python:alpine3.10
 
 COPY . /SmartHome-TauronEMeter
 WORKDIR /SmartHome-TauronEMeter
