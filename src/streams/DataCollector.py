@@ -5,7 +5,7 @@ import requests
 
 
 @dataclass
-class DataCollectorStream:
+class DataCollector:
     device_name: str
     url: str
     port: int

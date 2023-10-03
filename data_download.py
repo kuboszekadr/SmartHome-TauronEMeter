@@ -10,12 +10,14 @@ from src.tauron.TauronEMeter import TauronEMeter, EMeterType
 from src.streams.Disk import stream_to_disk
 
 
+checkpoint_file = 'checkpoints/data_download.yaml'
+
 def update_checkpoint_file(config: dict) -> None:
-    with open('checkpoints/source.yaml', 'w', encoding='UTF-8') as f:
+    with open(checkpoint_file, 'w', encoding='UTF-8') as f:
         config['last_date'] = date.strftime(date_format)
         yaml.dump(config, f)
 
-with open('checkpoints/source.yaml', 'r') as f:
+with open(checkpoint_file, 'r') as f:
     checkpoint = yaml.load(f, yaml.FullLoader)
 
 date_format = '%Y-%m-%d'
