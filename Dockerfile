@@ -1,6 +1,6 @@
 FROM python:alpine3.10
 
-COPY . /SmartHome-TauronEMeter
-WORKDIR /SmartHome-TauronEMeter
+COPY . /app
+WORKDIR /app
 
 RUN pip install -r requirements.txt

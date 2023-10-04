@@ -44,7 +44,8 @@ while date.date() < today:
         emeter.download(date=date,type_=EMeterType.OZE)
         emeter.download(date=date,type_=EMeterType.CONSUM)
 
-        stream_to_disk(emeter.data, './data', date)
+        stream_to_disk(emeter.data, './data/processed', date)
+        stream_to_disk(emeter._raw_response, './data/raw', date)
     except Exception as e:
         logging.error(f"Unhandled erorr {e}: {repr(e)}")
         raise
@@ -53,4 +54,5 @@ while date.date() < today:
         update_checkpoint_file(checkpoint)    
 
     date += timedelta(days=1)
+    emeter.clear()
     sleep(1)

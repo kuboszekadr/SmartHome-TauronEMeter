@@ -27,12 +27,13 @@ class TauronEMeter:
         self._username: str = username
         self._password: str = password
         self._session = None
-        self._raw_responses: List[TauronResponse] = []
+        self._raw_response: list = []
+        self._raw_data: List[TauronResponse] = []
 
     @property
     def data(self):
         results = []
-        for record in self._raw_responses:
+        for record in self._raw_data:
             date = record.date.strftime('%Y%m%d')
 
             data = record.response.get('data')
@@ -45,32 +46,16 @@ class TauronEMeter:
                 lbl = f"{date} {hour}"
                 ts.append(lbl)
             
-            type_ = [record.type for _ in range(len(lbls))]
-            records = zip(ts, type_, values)
-            records = map(lambda x: {'timestamp': x[0], 'type': x[1], 'value': x[2]}, records)
+            measure = [record.type for _ in range(len(lbls))]
+            records = zip(ts, measure, values)
+            records = map(lambda x: {'timestamp': x[0], 'measure_name': x[1], 'value': x[2]}, records)
             records = list(records)
             results += records
 
         return results
 
-    # def parse(self, value: str) -> json:
-    #     """
-    #     Gets OZE or chart data from tauron response
-
-    #     @param value: data to be extracted from Tauron chart data
-    #     @returns: json data slice
-    #     """
-    #     if self._raw_response == '':
-    #         return ValueError("Tauron data empty")
-
-    #     if value in self._data:
-    #         return self._data[value]
-
-    #     results = list(self._raw_response['dane'][value].values())
-    #     results = json.loads(json.dumps(results))
-
-    #     return results
-
+    def clear(self):
+        self._raw_data = []
 
     def login(self) -> None:
         """
@@ -112,7 +97,10 @@ class TauronEMeter:
             headers=TauronEMeter.HEADERS
         )
 
+
         response = TauronResponse(date, type_.value, r.json())
-        self._raw_responses.append(response)
+        
+        self._raw_response.append(r.json())
+        self._raw_data.append(response)
 
 
