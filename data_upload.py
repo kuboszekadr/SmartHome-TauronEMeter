@@ -51,10 +51,10 @@ logging.basicConfig(
 )
 logging.getLogger().addHandler(logging.StreamHandler(stdout))
 
-device_name = environ['device_name']
-endpoint_url = environ['endpoint_url']
-endpoint_port = environ['endpoint_port']
-stream = DataCollector(device_name, endpoint_url, endpoint_port)
+# device_name = environ['device_name']
+# endpoint_url = environ['endpoint_url']
+# endpoint_port = environ['endpoint_port']
+# stream = DataCollector(device_name, endpoint_url, endpoint_port)
 
 last_file_read = load_checkpoint()
 files_to_process = get_files_to_read('data/', last_file_read)
@@ -66,12 +66,12 @@ for file in files_to_process:
 
     logging.info(f"Sending to API...")
 
-    try:
-        stream.stream(data)
-    except Exception as e:
-        logging.exception(f"Unhandled erorr {e}: {repr(e)}")
-        raise
-    else:
-        save_checkpoint(file)
+    # try:
+    #     stream.stream(data)
+    # except Exception as e:
+    #     logging.exception(f"Unhandled erorr {e}: {repr(e)}")
+    #     raise
+    # else:
+    #     save_checkpoint(file)
 
     sleep(1)

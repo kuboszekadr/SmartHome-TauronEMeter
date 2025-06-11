@@ -27,32 +27,32 @@ class TauronEMeter:
         self._username: str = username
         self._password: str = password
         self._session = None
-        self._raw_response: list = []
-        self._raw_data: List[TauronResponse] = []
+        self._raw_responses: dict = {}
+        self._raw_data: dict = {}
 
-    @property
-    def data(self):
-        results = []
-        for record in self._raw_data:
-            date = record.date.strftime('%Y%m%d')
+    # @property
+    # def data(self):
+    #     results = []
+    #     for record in self._raw_data:
+    #         date = record.date.strftime('%Y%m%d')
 
-            data = record.response.get('data')
-            values = data.get('values')
-            lbls = data.get('labels')
+    #         data = record.response.get('data')
+    #         values = data.get('values')
+    #         lbls = data.get('labels')
 
-            ts = []
-            for x in lbls:
-                hour = datetime.time(hour=x-1).strftime('%H0000')
-                lbl = f"{date} {hour}"
-                ts.append(lbl)
+    #         ts = []
+    #         for x in lbls:
+    #             hour = datetime.time(hour=x-1).strftime('%H0000')
+    #             lbl = f"{date} {hour}"
+    #             ts.append(lbl)
             
-            measure = [record.type for _ in range(len(lbls))]
-            records = zip(ts, measure, values)
-            records = map(lambda x: {'timestamp': x[0], 'measure_name': x[1], 'value': x[2]}, records)
-            records = list(records)
-            results += records
+    #         measure = [record.type for _ in range(len(lbls))]
+    #         records = zip(ts, measure, values)
+    #         records = map(lambda x: {'timestamp': x[0], 'measure_name': x[1], 'value': x[2]}, records)
+    #         records = list(records)
+    #         results += records
 
-        return results
+    #     return results
 
     def clear(self):
         self._raw_data = []
@@ -100,7 +100,7 @@ class TauronEMeter:
 
         response = TauronResponse(date, type_.value, r.json())
         
-        self._raw_response.append(r.json())
-        self._raw_data.append(response)
+        self._raw_responses[type_] = response
+        return response
 
 
