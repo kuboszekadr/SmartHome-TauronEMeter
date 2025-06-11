@@ -100,7 +100,7 @@ class TauronEMeter:
 
         response = TauronResponse(date, type_.value, r.json())
         
-        self._raw_responses[type_] = response
-        return response
+        self._raw_responses[type_] = r.json()
+        return r.json()
 
 
