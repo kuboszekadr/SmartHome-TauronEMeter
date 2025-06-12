@@ -1,0 +1,6 @@
+.vscode/
+venv/
+data/*/**
+!data/*/**.gitkeep
+src/__pycache__
+.gitignore
