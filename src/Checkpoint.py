@@ -24,7 +24,8 @@ class Checkpoint(BaseModel):
         try:
             with open(self.path, 'r', encoding='UTF-8') as f:
                 data = yaml.load(f, Loader=yaml.FullLoader)
-                self.model_validate(data)
+            
+            self.last_date = self.model_validate(data).last_date
         except FileNotFoundError:
             pass
         except yaml.YAMLError as e:

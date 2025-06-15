@@ -27,6 +27,8 @@ def download_day_data(emeter: TauronEMeter, date: dt.date) -> None:
                    )
 
 checkpoint = Checkpoint(name='data_download')
+checkpoint.load()
+
 date_format = app_config.date_format
 today = dt.today()
 
