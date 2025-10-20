@@ -4,18 +4,20 @@ import os
 import json
 import logging
 
-from src.streams.DataCollector import DataCollector
+from src.streams.InfluxDataCollector import InfluxDataCollector
 from sys import stdout
 from time import sleep
 from os import environ
 
-checkpoint_file = 'checkpoints/data_upload.yaml'
+checkpoint_file = 'checkpoints/data_upload_ha.yaml'
 
 def load_checkpoint():
     result = None
-
-    with open(checkpoint_file, 'r') as f:
-        data = yaml.load(f, yaml.FullLoader)
+    try:
+        with open(checkpoint_file, 'r') as f:
+            data = yaml.load(f, yaml.FullLoader)
+    except FileNotFoundError:
+        data = {}
     result = data.get('latest_file', '2020-01-01.json')
     return result
 
@@ -51,10 +53,12 @@ logging.basicConfig(
 )
 logging.getLogger().addHandler(logging.StreamHandler(stdout))
 
-# device_name = environ['device_name']
-# endpoint_url = environ['endpoint_url']
-# endpoint_port = environ['endpoint_port']
-# stream = DataCollector(device_name, endpoint_url, endpoint_port)
+stream = InfluxDataCollector()
+
+# Test connection before processing files
+if not stream.test_connection():
+    logging.error("Failed to connect to InfluxDB. Exiting.")
+    exit(1)
 
 last_file_read = load_checkpoint()
 files_to_process = get_files_to_read('data/', last_file_read)
@@ -64,14 +68,16 @@ for file in files_to_process:
     with open(file, 'r') as f:
         data = json.load(f)
 
-    logging.info(f"Sending to API...")
+    logging.info(f"Sending to Home Assistant API...")
 
-    # try:
-    #     stream.stream(data)
-    # except Exception as e:
-    #     logging.exception(f"Unhandled erorr {e}: {repr(e)}")
-    #     raise
-    # else:
-    #     save_checkpoint(file)
+    try:
+        stream.stream(data, file)
+    except Exception as e:
+        logging.exception(f"Unhandled error {e}: {repr(e)}")
+        # Continue processing other files even if one fails
+        continue
+    else:
+        save_checkpoint(file)
+        logging.info(f"Successfully processed {file}")
 
-    sleep(1)
+    sleep(1)  # Rate limiting to avoid overwhelming InfluxDB
